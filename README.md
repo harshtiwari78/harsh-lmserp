@@ -1,4 +1,4 @@
-# DevRev On-Campus Project Round
+# LMSERP
 
 A basic ERP Library Management System built using the MERN stack. This project includes user roles and functionalities for managing library operations.
 
