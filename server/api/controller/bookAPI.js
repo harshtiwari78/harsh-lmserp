@@ -105,9 +105,6 @@ exports.addToCart = async (req, res) => {
     }
 };
 
-
-
-
 exports.checkout = async (req, res) => {
     try {
         const { username } = req.body;
@@ -120,13 +117,16 @@ exports.checkout = async (req, res) => {
 
         const booksInCart = user.cart;
         const borrowedBooks = [];
+        const notFoundBooks = [];
+        const outOfStockBooks = [];
 
         for (let i = 0; i < booksInCart.length; i++) {
             const isbn = booksInCart[i].isbn;
             const book = await bookSchema.findOne({ ISBN: isbn });
 
             if (!book) {
-                return res.status(400).json({ msg: `Book with ISBN ${isbn} not found` });
+                notFoundBooks.push(isbn);
+                continue;
             }
 
             if (book.ItemCount > 0) {
@@ -137,11 +137,11 @@ exports.checkout = async (req, res) => {
                 // Add book to borrowed array
                 borrowedBooks.push({
                     isbn: book.ISBN,
-                    takenDate: new Date(),// Set the due date as per your requirements
-
+                    takenDate: new Date(),
+                    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Due date set to 14 days from now
                 });
             } else {
-                return res.status(400).json({ msg: `Book with ISBN ${isbn} is out of stock` });
+                outOfStockBooks.push(isbn);
             }
         }
 
@@ -150,11 +150,19 @@ exports.checkout = async (req, res) => {
         user.borrowed = [...user.borrowed, ...borrowedBooks];
         await user.save();
 
-        return res.status(200).json({ msg: "Checkout successful" });
-    } catch (error) {
-        throw error;
-    }
+        let message = "Checkout successful";
+        if (notFoundBooks.length > 0) {
+            message += `. The following books were not found: ${notFoundBooks.join(", ")}`;
+        }
+        if (outOfStockBooks.length > 0) {
+            message += `. The following books were out of stock: ${outOfStockBooks.join(", ")}`;
+        }
 
+        return res.status(200).json({ msg: message, borrowedBooks });
+    } catch (error) {
+        console.error("Checkout error:", error);
+        return res.status(500).json({ msg: "Internal server error during checkout" });
+    }
 };
 
 exports.returnBooks = async (req, res) => {
@@ -321,3 +329,94 @@ exports.borrowedBooks = async (req, res) => {
         return res.status(500).json({ msg: "Internal Server Error" });
     }
 }
+
+exports.borrowedBooks = async (req, res) => {
+    try {
+        const username = req.params.username;
+        const user = await userSchema.findOne({ username });
+
+        if (!user) {
+            return res.status(404).json({ msg: "User not found" });
+        }
+
+        if (user.borrowed.length === 0) {
+            return res.status(200).json({ msg: "No borrowed books found", books: [] });
+        }
+
+        const borrowedBooks = [];
+
+        for (const book of user.borrowed) {
+            const borrowedBook = {
+                isbn: book.isbn,
+                title: "",
+                author: "",
+                takenDate: book.takenDate,
+                dueDate: book.dueDate
+            };
+
+            const bookDetails = await bookSchema.findOne({ ISBN: book.isbn });
+            if (bookDetails) {
+                borrowedBook.title = bookDetails.Title;
+                borrowedBook.author = bookDetails.Author;
+            } else {
+                borrowedBook.title = "Unknown";
+                borrowedBook.author = "Unknown";
+            }
+
+            borrowedBooks.push(borrowedBook);
+        }
+
+        return res.status(200).json({ books: borrowedBooks });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ msg: "Internal Server Error" });
+    }
+};
+
+// Approve a book request
+exports.approveBookRequest = async (req, res) => {
+    try {
+      const { requestId } = req.body;
+      const { user } = req;
+  
+      if (!user.isAdmin) {
+        return res.status(403).json({ msg: "Unauthorized. Admin access required." });
+      }
+  
+      // Implement your logic to approve the book request
+      // This might involve updating a 'status' field in a book request model
+  
+      return res.status(200).json({ msg: "Book request approved successfully" });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ msg: "Internal Server Error" });
+    }
+  };
+  
+  // Add a new book (admin only)
+  exports.addNewBook = async (req, res) => {
+    try {
+      const { user } = req;
+      const { BibNum, Title, ItemCount, Author, ISBN, Publisher, Genre } = req.body;
+  
+      if (!user.isAdmin) {
+        return res.status(403).json({ msg: "Unauthorized. Admin access required." });
+      }
+  
+      const newBook = new bookSchema({
+        BibNum,
+        Title,
+        ItemCount,
+        Author,
+        ISBN,
+        Publisher,
+        Genre
+      });
+  
+      await newBook.save();
+      return res.status(200).json({ msg: "New book added successfully" });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ msg: "Internal Server Error" });
+    }
+  };

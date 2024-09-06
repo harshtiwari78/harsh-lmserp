@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import "../../Assets/css/cart.css";
+import { toast } from "react-toastify";
 
 const Cart = ({ user }) => {
   const [data, setData] = useState([null]);
@@ -22,14 +23,30 @@ const Cart = ({ user }) => {
   const proceedCheckout = async () => {
     const username = user.username;
     const send = { username: username };
-    await axios
-      .post(`http://localhost:5000/checkout`, send)
-      .then((response) => {
-        console.log(response);
+    try {
+      const response = await axios.post(`http://localhost:5000/checkout`, send);
+      console.log(response);
+      if (response.status === 200) {
+        toast.success("Checkout successful! Books have been borrowed.", {
+          position: "top-center",
+          autoClose: 2000,
+        });
+        setTimeout(() => {
+          window.location.href = "/profile";
+        }, 2500);
+      } else {
+        toast.error("Checkout failed. Please try again.", {
+          position: "top-center",
+          autoClose: 2000,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("An error occurred during checkout.", {
+        position: "top-center",
+        autoClose: 2000,
       });
-    setTimeout(() => {
-      window.location.href = "/home";
-    }, 500);
+    }
   };
 
   useEffect(() => {

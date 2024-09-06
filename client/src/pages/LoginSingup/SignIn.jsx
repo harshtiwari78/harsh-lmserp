@@ -26,7 +26,7 @@ const Signin = () => {
       const message = response.data.message;
       const status = response.data.status;
 
-      if (status === "200") {
+      if (status === "200") { // ok
         toast.success(message, {
           position: "top-center",
           autoClose: 2000,
@@ -36,7 +36,7 @@ const Signin = () => {
           textAlign: "center",
         });
         window.location.href = "/profile";
-      } else if (status === "202") {
+      } else if (status === "202") { // accepted but not completed
         toast.warn(message, {
           position: "top-center",
           autoClose: 2000,
@@ -46,7 +46,7 @@ const Signin = () => {
           textAlign: "center",
           theme: "dark",
         });
-      } else if (status === "500") {
+      } else if (status === "500") { // bad request
         toast.error(message, {
           position: "top-center",
           autoClose: 2000,
@@ -80,61 +80,10 @@ const Signin = () => {
   const img1 =
     "https://github.com/AnuragRoshan/images/blob/main/Lovepik_com-450098997-Account%20login%20flat%20illustration.png?raw=true";
   return (
-    // <div className="login-top">
-    //   <div>
-    //     <div className="login-form-top display-flex-row">
-    //       <div className="login-form-right">
-    //         {/* <div className="">
-    //           <img src={img1} style={{ width: "50xrem" }} alt="" srcset="" />
-    //         </div> */}
-    //         <div className="login-new-user">
-    //           {/* New User ?<a href="">Sign Up</a> */}
-    //         </div>
-    //       </div>
-    //       <div className="login-form-right">
-    //         <div className="login-title" style={{ textAlign: "center" }}>
-    //           <h2>LOGIN</h2>
-    //         </div>
-    //         <div className="login-form">
-    //           <div class="login-field">
-    //             <input
-    //               type="text"
-    //               name="username"
-    //               class="login-input"
-    //               placeholder="Username"
-    //               onChange={(e) => handleInputs(e)}
-    //             />
-    //           </div>
-    //           <div class="login-field ">
-    //             <input
-    //               type="password"
-    //               class="login-input"
-    //               placeholder="Password"
-    //               name="password"
-    //               onChange={(e) => handleInputs(e)}
-    //             />
-    //           </div>
-    //         </div>
-    //         <div className="">
-    //           <button
-    //             type="submit"
-    //             className="btn"
-    //             style={{ backgroundColor: "grey" }}
-    //             onClick={() => submitForm()}
-    //           >
-    //             Login
-    //           </button>
-    //           <ToastContainer />
-    //         </div>
-    //       </div>
-    //     </div>
-    //   </div>
-    // </div>
-
     <div className="login-top">
       <div className="login-inner-top-left">
         <div className="login-title">lmserp</div>
-        <div className="login-title-below">Loginn To Your Account</div>
+        <div className="login-title-below">Login To Your Account</div>
         <div className="login-signup-call">
           Dont Have Account ? <a href="/signup">SignUp</a>
         </div>

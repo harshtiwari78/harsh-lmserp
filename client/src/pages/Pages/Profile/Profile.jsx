@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../../Assets/css/profile.css";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -17,44 +17,63 @@ const Profile = ({ user }) => {
     address: user.address,
     uniqueId: user.uniqueId,
   });
+
+  const [borrowedBooks, setBorrowedBooks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBorrowedBooks();
+  }, []);
+
+  const fetchBorrowedBooks = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`http://localhost:5000/borrowedBooks/${user.username}`);
+      setBorrowedBooks(response.data.books);
+    } catch (error) {
+      console.error("Error fetching borrowed books:", error);
+      toast.error("Failed to fetch borrowed books");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleInputs = (e) => {
     setData({ ...data, [e.target.name]: e.target.value });
-    // setData({ ...data, uniqueId: user.uniqueId });
-    console.log(data);
   };
-  const submitForm = async () => {
-    // alert("Submitted")
-    await axios
-      .post(`http://localhost:5000/updateUser`, data)
-      .then((response) => {
-        var message = response.data.msg;
-        var status = response.status;
-        console.log(message);
 
-        if (status === 200) {
-          toast.success(`${message}`, {
-            position: "top-center",
-            autoClose: 2000,
-            pauseOnHover: false,
-            pauseOnFocusLoss: false,
-            draggable: true,
-            textAlign: "center",
-          });
-          setTimeout(() => {
-            window.location.href = "/profile";
-          }, 1500);
-          // window.location.reload();
-        } else if (status === 202) {
-          toast.warn(`${message}`, {
-            position: "top-center",
-            autoClose: 2000,
-            pauseOnHover: false,
-            pauseOnFocusLoss: false,
-            draggable: true,
-            textAlign: "center",
-          });
-        }
-      });
+  const submitForm = async () => {
+    try {
+      const response = await axios.post(`http://localhost:5000/updateUser`, data);
+      const message = response.data.msg;
+      const status = response.status;
+
+      if (status === 200) {
+        toast.success(message, {
+          position: "top-center",
+          autoClose: 2000,
+          pauseOnHover: false,
+          pauseOnFocusLoss: false,
+          draggable: true,
+          textAlign: "center",
+        });
+        setTimeout(() => {
+          window.location.href = "/profile";
+        }, 1500);
+      } else if (status === 202) {
+        toast.warn(message, {
+          position: "top-center",
+          autoClose: 2000,
+          pauseOnHover: false,
+          pauseOnFocusLoss: false,
+          draggable: true,
+          textAlign: "center",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+      toast.error("Failed to update user information");
+    }
   };
 
   return (
@@ -67,7 +86,7 @@ const Profile = ({ user }) => {
               borderRadius: "2rem 2rem 2rem 2rem",
               backgroundColor: "#3d5a80",
               padding: "1rem",
-              boxShadow: "1px 1px 21px -3px rgba(0,0,0,10.75)",
+              boxShadow: "1px 1px 21px -3px rgba(0,0,0,0.75)",
             }}
           >
             <div
@@ -90,9 +109,8 @@ const Profile = ({ user }) => {
             <div>
               <img
                 style={{ width: "15rem" }}
-                src="https://api.multiavatar.com/Starcrasher.png?apikey=dIwKHchoCn6x9k"
-                alt=""
-                srcset=""
+                src={`https://api.multiavatar.com/${user.name}.png?apikey=dIwKHchoCn6x9k`}
+                alt="User Avatar"
               />
             </div>
             <div
@@ -153,8 +171,7 @@ const Profile = ({ user }) => {
                 color: "white",
               }}
             >
-              Joined on{" "}
-              <span style={{ color: "#a0a2a1" }}>{formattedDate}</span>
+              Joined on <span style={{ color: "#a0a2a1" }}>{formattedDate}</span>
             </div>
             <div
               style={{
@@ -166,7 +183,15 @@ const Profile = ({ user }) => {
                 color: "white",
               }}
             >
-              Nothing <span style={{ color: "#2bea2b" }}>Borrowed</span>
+              {isLoading ? (
+                <span>Loading borrowed books...</span>
+              ) : borrowedBooks.length > 0 ? (
+                <span>
+                  <span style={{ color: "#2bea2b" }}>{borrowedBooks.length}</span> books borrowed
+                </span>
+              ) : (
+                <span>Nothing <span style={{ color: "#2bea2b" }}>Borrowed</span></span>
+              )}
             </div>
             <div
               style={{
@@ -178,8 +203,7 @@ const Profile = ({ user }) => {
                 color: "white",
               }}
             >
-              <span style={{ color: "yellow" }}> {user.cart.length} </span>{" "}
-              items in{" "}
+              <span style={{ color: "yellow" }}> {user.cart.length} </span> items in{" "}
               <a
                 style={{ color: "#539cda", textDecoration: "none" }}
                 href="/cart"
@@ -196,7 +220,7 @@ const Profile = ({ user }) => {
                 margin: "1rem",
                 backgroundColor: "white",
                 borderRadius: "2rem",
-                boxShadow: "1px 1px 21px -3px rgba(0,0,0,10.75)",
+                boxShadow: "1px 1px 21px -3px rgba(0,0,0,0.75)",
               }}
             >
               <div
@@ -221,11 +245,11 @@ const Profile = ({ user }) => {
                 <input
                   style={{ width: "60%" }}
                   type="text"
-                  class="login-input"
+                  className="login-input"
                   name="name"
                   placeholder="Name"
                   defaultValue={user.name}
-                  onChange={(e) => handleInputs(e)}
+                  onChange={handleInputs}
                 />
               </div>
               <div
@@ -238,11 +262,11 @@ const Profile = ({ user }) => {
                 <input
                   style={{ width: "60%" }}
                   type="email"
-                  class="login-input"
+                  className="login-input"
                   name="username"
                   placeholder="Email"
                   defaultValue={user.username}
-                  onChange={(e) => handleInputs(e)}
+                  onChange={handleInputs}
                 />
               </div>
               <div
@@ -255,11 +279,11 @@ const Profile = ({ user }) => {
                 <input
                   style={{ width: "30%" }}
                   type="number"
-                  class="login-input"
+                  className="login-input"
                   name="phone"
                   defaultValue={user.phone}
                   placeholder="Phone"
-                  onChange={(e) => handleInputs(e)}
+                  onChange={handleInputs}
                 />
               </div>
               <div
@@ -272,21 +296,60 @@ const Profile = ({ user }) => {
                 <input
                   style={{ width: "90%" }}
                   type="text"
-                  class="login-input"
+                  className="login-input"
                   name="address"
                   placeholder="Address"
                   defaultValue={user.address}
-                  // onChange={(e) => handleInputs(e)}
+                  onChange={handleInputs}
                 />
                 <span onClick={submitForm} className="profile-button">
                   Update
                 </span>
-                <ToastContainer />
               </div>
+            </div>
+          </div>
+          <div>
+            <div
+              style={{
+                margin: "1rem",
+                backgroundColor: "white",
+                borderRadius: "2rem",
+                boxShadow: "1px 1px 21px -3px rgba(0,0,0,0.75)",
+              }}
+            >
+              <div
+                style={{
+                  margin: "0.5rem",
+                  display: "flex",
+                  padding: "1rem 0 0 1rem",
+                  fontSize: "2rem",
+                  fontWeight: "600",
+                  fontFamily: "poppins",
+                }}
+              >
+                Borrowed Books
+              </div>
+              {isLoading ? (
+                <div style={{ margin: "0.5rem", padding: "0.5rem" }}>Loading borrowed books...</div>
+              ) : borrowedBooks.length > 0 ? (
+                borrowedBooks.map((book, index) => (
+                  <div key={index} style={{ margin: "0.5rem", padding: "0.5rem", borderBottom: "1px solid #eee" }}>
+                    <div style={{ fontWeight: "bold" }}>{book.title}</div>
+                    <div>by {book.author}</div>
+                    <div>Borrowed on: {new Date(book.takenDate).toLocaleDateString()}</div>
+                    <div>Due on: {new Date(book.dueDate).toLocaleDateString()}</div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ margin: "0.5rem", padding: "0.5rem" }}>
+                  No books currently borrowed.
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 };

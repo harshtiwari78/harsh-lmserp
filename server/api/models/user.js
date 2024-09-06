@@ -18,6 +18,7 @@ const userSchema = mongoose.Schema(
         uniqueId: { type: String, required: true },
         borrowed: []
         , cart: [],
+        isAdmin: { type: Boolean, default: false }
     },
     { timestamps: true }
 );

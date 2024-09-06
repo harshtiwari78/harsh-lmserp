@@ -24,8 +24,8 @@ require("./db_connection");
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
-    cors({
-        origin: "http://localhost:3005", // <-- location of the react app were connecting to
+    cors({ // cross origin policy that helps us in managing network requests across external providers
+        origin: "http://localhost:3000", // <-- location of the react app were connecting to
         credentials: true,
     })
 );
